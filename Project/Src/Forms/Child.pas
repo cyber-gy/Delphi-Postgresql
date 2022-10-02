@@ -1,3 +1,20 @@
+{*******************************************************}
+{                                                       }
+{       Базовая  дочерняя форма приложения              }
+{                                                       }
+{       Copyright (C) 2022 Cyber-GY                     }
+{                                                       }
+{                      * * *                            }
+{                                                       }
+{     Получает отдельную сессию подключения к СУБД      }
+{     из пула соединений дата-модуля Db.                }
+{     Имеет базовый набор компонент для чтения,         }
+{     записи и поиска по таблицам СУБД.                 }
+{     В текущей версии функционал реализован через      }
+{     прямой доступ к ткблицам СУБД.                    }
+{                                                       }
+{*******************************************************}
+
 unit Child;
 
 interface
@@ -47,11 +64,13 @@ type
     CertPanel: TPanel;
     procedure FormShow(Sender: TObject);
     procedure SearchActionExecute(Sender: TObject);
+    procedure PgConnectionError(ASender, AInitiator: TObject;
+      var AException: Exception);
   private
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
   protected
-    SearchFrame: TSearchFrame;
-    procedure DoSearch; virtual;
+    SearchFrame: TSearchFrame;                // Базовый фрейм поиска
+    procedure DoSearch; virtual;              // Реализация поиска в СУБД
   public
     procedure BringToFront(Sender: TObject);
     constructor Create(AOwner: TComponent); override;
@@ -85,6 +104,13 @@ begin
   SearchFrame.Init('По фамилии:', SearchAction);
 end;
 
+{-------------------------------------------------------------------------------
+  Процедура: TChildForm.DoSearch
+  Описание: базовый поиск по фамилии
+  Автор: Cyber-GY
+  Входные параметры: Нет
+  Результат: переключение master-источника данных на результаты поиска и обратно
+-------------------------------------------------------------------------------}
 procedure TChildForm.DoSearch;
 var
   p: TFDParam;
@@ -114,12 +140,72 @@ begin
   Action := caFree
 end;
 
+{-------------------------------------------------------------------------------
+  Процедура: TChildForm.FormShow
+  Автор: Cyber-GY
+  Входные параметры: Sender: TObject
+  Результат: Установка подключения к базе, запросы данных
+-------------------------------------------------------------------------------}
 procedure TChildForm.FormShow(Sender: TObject);
+var
+  IsSuccess: Boolean;
 begin
-  PgConnection.Connected := True;
-  PgPatientQuery.OpenOrExecute;
-  PgCertQuery.OpenOrExecute;
-//  Dm.Pg.Connect;
+  IsSuccess := False;
+  try
+    PgConnection.Open();
+    IsSuccess := PgConnection.Connected;
+  except on E: Exception do
+    // write to log ...
+    ShowMessage('Ошибка подключения к СУБД:'#10 + E.Message);
+  end;
+
+  if IsSuccess then begin
+    try
+      PgPatientQuery.OpenOrExecute;
+    except on E: Exception do begin
+      // write to log ...
+      IsSuccess := False;
+      ShowMessage('Ошибка доступа к таблице:'#10 + E.Message);
+      end;
+    end;
+  end;
+
+  if IsSuccess then begin
+    try
+      PgCertQuery.OpenOrExecute;
+    except on E: Exception do
+      // write to log ...
+      ShowMessage('Ошибка доступа к таблице:'#10 + E.Message);
+    end;
+  end;
+end;
+
+{-------------------------------------------------------------------------------
+  Процедура: TChildForm.PgConnectionError
+  Описание: глобальная обработка ошибок работы с СУБД
+  Автор: Cyber-GY
+  Входные параметры:
+    ASender - TFDConnection object
+    AInitiator - объект-источник исключительной ситуации
+    AException - объект сведений об исключительной ситуации
+  Результат: регистрация ошибок работы с СУБД
+-------------------------------------------------------------------------------}
+procedure TChildForm.PgConnectionError(ASender, AInitiator: TObject;
+  var AException: Exception);
+var
+  s: string;
+begin
+  s := 'Объект: ';
+  if AInitiator <> nil then begin
+    if AInitiator is TComponent then begin
+      s := s + TComponent(AInitiator).Name + ' (' + AInitiator.ClassName + ')';
+    end else begin
+      s := s + AInitiator.ClassName;
+    end;
+  end;
+  // write to log ...
+  ShowMessage('Ошибка работы с СУБД:'#10 + AException.Message + #10#10 + s);
+  // Close connection?
 end;
 
 procedure TChildForm.SearchActionExecute(Sender: TObject);

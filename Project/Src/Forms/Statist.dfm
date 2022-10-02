@@ -1,7 +1,5 @@
 inherited StatForm: TStatForm
-  Caption = 'ChildForm1'
-  ExplicitWidth = 868
-  ExplicitHeight = 450
+  Caption = #1040#1056#1052' '#1089#1090#1072#1090#1080#1089#1090#1072
   PixelsPerInch = 120
   TextHeight = 16
   inherited SearchPanel: TPanel
@@ -23,7 +21,7 @@ inherited StatForm: TStatForm
         Date = 44833.660413148150000000
         Format = ' '
         Time = 44833.660413148150000000
-        TabOrder = 0
+        TabOrder = 1
         OnClick = DateEdit1Click
         OnChange = DateEdit1Change
         OnExit = DateEdit1Exit
@@ -38,7 +36,7 @@ inherited StatForm: TStatForm
         Date = 44833.660413148150000000
         Format = ' '
         Time = 44833.660413148150000000
-        TabOrder = 1
+        TabOrder = 2
         OnChange = DateEdit1Change
         OnExit = DateEdit1Exit
         OnKeyPress = DateEdit1KeyPress
@@ -53,19 +51,26 @@ inherited StatForm: TStatForm
         Items.Strings = (
           #1088#1086#1078#1076#1077#1085#1080#1103
           #1079#1072#1085#1077#1089#1077#1085#1080#1103)
-        TabOrder = 2
+        TabOrder = 0
       end
     end
   end
   inherited PatientNavigator: TDBNavigator
     Hints.Strings = ()
+    Visible = False
   end
   inherited BrowsePanel: TPanel
-    inherited PatGrid: TDBGrid
-      ReadOnly = True
+    inherited PatientPanel: TPanel
+      inherited PatGrid: TDBGrid
+        Options = [dgTitles, dgIndicator, dgColumnResize, dgColLines, dgRowLines, dgTabs, dgConfirmDelete, dgCancelOnExit, dgTitleClick, dgTitleHotTrack]
+        ReadOnly = True
+      end
     end
-    inherited CertGrid: TDBGrid
-      ReadOnly = True
+    inherited CertPanel: TPanel
+      inherited CertGrid: TDBGrid
+        Options = [dgTitles, dgIndicator, dgColumnResize, dgColLines, dgRowLines, dgTabs, dgConfirmDelete, dgCancelOnExit, dgTitleClick, dgTitleHotTrack]
+        ReadOnly = True
+      end
     end
   end
   inherited PgConnection: TFDConnection

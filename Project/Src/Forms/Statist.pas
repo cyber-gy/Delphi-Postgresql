@@ -1,3 +1,17 @@
+{*******************************************************}
+{                                                       }
+{       АРМ статиста - наследник базовой                }
+{         дочерней формы.                               }
+{                                                       }
+{       Copyright (C) 2022 Cyber-GY                     }
+{                                                       }
+{                * * *                                  }
+{                                                       }
+{      Имеет расширенные возможности поиска             }
+{      Не способен модифицировать данные                }
+{                                                       }
+{*******************************************************}
+
 unit Statist;
 
 interface
@@ -25,7 +39,7 @@ type
   private
     { Private declarations }
   protected
-    procedure DoSearch; override;
+    procedure DoSearch; override; // переопределение алгоритма поиска
   public
     constructor Create(AOwner: TComponent); override;
   end;
@@ -41,6 +55,9 @@ const
   EmptyDateFormat = ' ';
   ShortDateFormat = 'dd.MM.yyyy';
 
+type
+  TMyWinControl = class(TWinControl);  // access protected methods
+
 constructor TStatForm.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
@@ -48,11 +65,13 @@ begin
   DateEdit2.Date := Now();
 end;
 
+{$REGION ' Поведение TDateTimePicker '}
 procedure TStatForm.DateEdit1Change(Sender: TObject);
 begin
   if TDateTimePicker(Sender).Format = EmptyDateFormat then begin
     TDateTimePicker(Sender).Format := ShortDateFormat;
-  end;    
+    TDateTimePicker(Sender).SetFocus;
+  end;
 end;
 
 procedure TStatForm.DateEdit1Click(Sender: TObject);
@@ -62,13 +81,13 @@ end;
 
 procedure TStatForm.DateEdit1Exit(Sender: TObject);
 begin
-  if (Sender = DateEdit1) and (DateEdit2.Format = EmptyDateFormat) 
+  if (Sender = DateEdit1) and (DateEdit2.Format = EmptyDateFormat)
     and (DateEdit1.Format <> EmptyDateFormat) then
   begin
     DateEdit2.Format := ShortDateFormat;
     DateEdit2.Date := DateEdit1.Date;
-  end else 
-  if (Sender = DateEdit2) and (DateEdit1.Format = EmptyDateFormat) 
+  end else
+  if (Sender = DateEdit2) and (DateEdit1.Format = EmptyDateFormat)
     and (DateEdit2.Format <> EmptyDateFormat) then
   begin
     DateEdit1.Format := ShortDateFormat;
@@ -79,7 +98,10 @@ end;
 procedure TStatForm.DateEdit1KeyPress(Sender: TObject; var Key: Char);
 begin
   case Key of
-    Chr(VK_RETURN): SearchAction.Execute;
+    Chr(VK_RETURN): if (Sender is TWinControl) and (TWinControl(Sender).Parent <> nil) then begin
+      TMyWinControl(TWinControl(Sender).Parent).SelectNext(TWinControl(Sender), True, True);
+      //SearchAction.Execute;
+    end;
     Chr(VK_ESCAPE): begin
       DateEdit1.Format := EmptyDateFormat;
       DateEdit2.Format := EmptyDateFormat;
@@ -87,7 +109,15 @@ begin
     end;
   end;
 end;
+{$ENDREGION}
 
+{-------------------------------------------------------------------------------
+  Процедура: TStatForm.DoSearch
+  Автор: Cyber-GY
+  Входные параметры: Нет
+  Результат: к базовому поиску по фамилии добавлены возможности фильтра по
+             диапазону дат.
+-------------------------------------------------------------------------------}
 procedure TStatForm.DoSearch;
 const
   ConditionStr = 'surname LIKE ''%'' ||:p_surname|| ''%''';
@@ -98,7 +128,7 @@ var
   s: string;
   p: TFDParam;
 begin
-  // очистка
+  // очистка условий запроса
   while PgSearchQuery.SQL.Count > 1 do begin
     PgSearchQuery.SQL.Delete(1);
   end;

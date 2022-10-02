@@ -1,8 +1,10 @@
 object MainForm: TMainForm
+  AlignWithMargins = True
   Left = 0
   Top = 0
-  Caption = 'MainForm'
-  ClientHeight = 60
+  Align = alTop
+  Caption = #1040#1056#1052#1099' '#1088#1072#1073#1086#1090#1099' '#1089' '#1057#1059#1041#1044' PostgreSQL'
+  ClientHeight = 58
   ClientWidth = 850
   Color = clBtnFace
   Constraints.MaxHeight = 105

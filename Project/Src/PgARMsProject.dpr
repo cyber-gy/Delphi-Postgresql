@@ -1,4 +1,4 @@
-program Project1;
+program PgARMsProject;
 
 uses
   Forms,
@@ -7,7 +7,8 @@ uses
   Child in 'Forms\Child.pas' {ChildForm},
   Search in 'Frames\Search.pas' {SearchFrame: TFrame},
   Statist in 'Forms\Statist.pas' {StatForm},
-  Oper in 'Forms\Oper.pas' {OperForm};
+  Oper in 'Forms\Oper.pas' {OperForm},
+  CgyDtPicker in 'Components\CgyDtPicker.pas';
 
 {$R *.res}
 

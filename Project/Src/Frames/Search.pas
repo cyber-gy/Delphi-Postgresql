@@ -2,7 +2,7 @@
 {                                                       }
 {       Фрейм поиска по одному текстовому значению      }
 {                                                       }
-{       Copyright (C) 2022 Komtek                       }
+{       Copyright (C) 2022 Cyber-GY                     }
 {                                                       }
 {*******************************************************}
 
@@ -39,8 +39,8 @@ end;
 procedure TSearchFrame.ValueEditKeyPress(Sender: TObject; var Key: Char);
 begin
   case Key of
-    Chr(VK_RETURN): SearchButton.Click;
-    Chr(VK_ESCAPE): begin
+    Chr(VK_RETURN): SearchButton.Click; // поиск по значению
+    Chr(VK_ESCAPE): begin               // очистка фильтра
       ValueEdit.Text := '';
       SearchButton.Click;
     end;

@@ -1,7 +1,32 @@
 inherited OperForm: TOperForm
-  Caption = 'OperForm'
+  Caption = #1040#1056#1052' '#1086#1087#1077#1088#1072#1090#1086#1088#1072
+  ExplicitWidth = 868
+  ExplicitHeight = 452
   PixelsPerInch = 120
   TextHeight = 16
+  inherited SearchPanel: TPanel
+    object TypeSearchPanel: TPanel
+      Left = 2
+      Top = 2
+      Width = 151
+      Height = 77
+      Align = alLeft
+      BevelOuter = bvNone
+      TabOrder = 0
+      object SearchTypeGroup: TRadioGroup
+        Left = 16
+        Top = 5
+        Width = 113
+        Height = 65
+        Caption = #1055#1086#1080#1089#1082':'
+        ItemIndex = 0
+        Items.Strings = (
+          #1087#1086' '#1092#1072#1084#1080#1083#1080#1080
+          '10 '#1087#1086#1089#1083#1077#1076#1085#1080#1093)
+        TabOrder = 0
+      end
+    end
+  end
   inherited PatientNavigator: TDBNavigator
     Top = 328
     Hints.Strings = ()
@@ -14,21 +39,21 @@ inherited OperForm: TOperForm
     TabOrder = 1
     ExplicitHeight = 232
     inherited BrowseSplitter: TSplitter
-      Left = 836
       Height = 228
-      ExplicitLeft = 836
+      ExplicitLeft = 606
       ExplicitHeight = 228
     end
     inherited PatientPanel: TPanel
       Height = 228
       ExplicitHeight = 228
       inherited PatGrid: TDBGrid
-        Height = 123
+        Height = 117
       end
       object PatEditGridPanel: TGridPanel
-        Left = 0
-        Top = 129
-        Width = 604
+        AlignWithMargins = True
+        Left = 3
+        Top = 126
+        Width = 598
         Height = 99
         Align = alBottom
         BevelOuter = bvNone
@@ -46,10 +71,10 @@ inherited OperForm: TOperForm
             Value = 16.666666666666670000
           end
           item
-            Value = 16.666666666666680000
+            Value = 16.666666666666670000
           end
           item
-            Value = 16.666666666666680000
+            Value = 16.666666666666670000
           end>
         ControlCollection = <
           item
@@ -94,20 +119,8 @@ inherited OperForm: TOperForm
             Row = 2
           end
           item
-            Column = 1
-            ColumnSpan = 2
-            Control = PatBirthdateEdit
-            Row = 2
-          end
-          item
             Column = 3
             Control = PatRegLabel
-            Row = 2
-          end
-          item
-            Column = 4
-            ColumnSpan = 2
-            Control = PatRegEdit
             Row = 2
           end
           item
@@ -129,6 +142,18 @@ inherited OperForm: TOperForm
             Column = 3
             Control = PatCancelButton
             Row = 3
+          end
+          item
+            Column = 1
+            ColumnSpan = 2
+            Control = PatBirthdatePanel
+            Row = 2
+          end
+          item
+            Column = 4
+            ColumnSpan = 2
+            Control = PatRegPanel
+            Row = 2
           end>
         RowCollection = <
           item
@@ -144,13 +169,21 @@ inherited OperForm: TOperForm
           item
             SizeStyle = ssAbsolute
             Value = 30.000000000000000000
+          end
+          item
+            SizeStyle = ssAbsolute
+            Value = 8.000000000000000000
           end>
         TabOrder = 1
+        OnClick = PatEditGridPanelClick
+        ExplicitLeft = 0
+        ExplicitTop = 129
+        ExplicitWidth = 604
         object PatSurnameLabel: TLabel
           AlignWithMargins = True
           Left = 3
           Top = 3
-          Width = 194
+          Width = 192
           Height = 12
           Align = alClient
           Caption = #1060#1072#1084#1080#1083#1080#1103
@@ -159,23 +192,25 @@ inherited OperForm: TOperForm
         end
         object PatFirstnameLabel: TLabel
           AlignWithMargins = True
-          Left = 203
+          Left = 201
           Top = 3
-          Width = 194
+          Width = 192
           Height = 12
           Align = alClient
           Caption = #1048#1084#1103
+          ExplicitLeft = 203
           ExplicitWidth = 23
           ExplicitHeight = 16
         end
         object PatMiddlenameLabel: TLabel
           AlignWithMargins = True
-          Left = 403
+          Left = 399
           Top = 3
-          Width = 198
+          Width = 196
           Height = 12
           Align = alClient
           Caption = #1054#1090#1095#1077#1089#1090#1074#1086
+          ExplicitLeft = 403
           ExplicitWidth = 55
           ExplicitHeight = 16
         end
@@ -183,148 +218,180 @@ inherited OperForm: TOperForm
           AlignWithMargins = True
           Left = 3
           Top = 21
-          Width = 194
-          Height = 19
+          Width = 192
+          Height = 15
           Align = alClient
           DataField = 'surname'
           DataSource = PatientSource
           TabOrder = 0
+          ExplicitWidth = 194
           ExplicitHeight = 24
         end
         object PatFirstnameEdit: TDBEdit
           AlignWithMargins = True
-          Left = 203
+          Left = 201
           Top = 21
-          Width = 194
-          Height = 19
+          Width = 192
+          Height = 15
           Align = alClient
           DataField = 'Firstname'
           DataSource = PatientSource
           TabOrder = 1
+          ExplicitLeft = 203
+          ExplicitWidth = 194
           ExplicitHeight = 24
         end
         object PatMiddlenameEdit: TDBEdit
           AlignWithMargins = True
-          Left = 403
+          Left = 399
           Top = 21
-          Width = 198
-          Height = 19
+          Width = 196
+          Height = 15
           Align = alClient
           DataField = 'Middlename'
           DataSource = PatientSource
           TabOrder = 2
+          ExplicitLeft = 403
+          ExplicitWidth = 198
           ExplicitHeight = 24
         end
         object PatBdLabel: TLabel
           AlignWithMargins = True
           Left = 3
-          Top = 46
-          Width = 94
-          Height = 19
+          Top = 42
+          Width = 93
+          Height = 15
           Align = alClient
           Alignment = taRightJustify
           Caption = #1044#1072#1090#1072' '#1088#1086#1078#1076'.'
           Layout = tlCenter
           ExplicitLeft = 29
+          ExplicitTop = 46
           ExplicitWidth = 68
           ExplicitHeight = 16
         end
-        object PatBirthdateEdit: TDateTimePicker
-          AlignWithMargins = True
-          Left = 103
-          Top = 46
-          Width = 194
-          Height = 19
-          Align = alClient
-          Date = 44833.935363819440000000
-          Time = 44833.935363819440000000
-          TabOrder = 3
-        end
         object PatRegLabel: TLabel
           AlignWithMargins = True
-          Left = 303
-          Top = 46
-          Width = 94
-          Height = 19
+          Left = 300
+          Top = 42
+          Width = 93
+          Height = 15
           Align = alClient
           Alignment = taRightJustify
           Caption = #1044#1072#1090#1072' '#1088#1077#1075'.'
           Layout = tlCenter
           ExplicitLeft = 341
+          ExplicitTop = 46
           ExplicitWidth = 56
           ExplicitHeight = 16
-        end
-        object PatRegEdit: TDateTimePicker
-          AlignWithMargins = True
-          Left = 403
-          Top = 46
-          Width = 198
-          Height = 19
-          Align = alClient
-          Date = 44833.935409189810000000
-          Time = 44833.935409189810000000
-          TabOrder = 4
         end
         object PatNewButton: TButton
           AlignWithMargins = True
           Left = 3
-          Top = 71
-          Width = 94
+          Top = 63
+          Width = 93
           Height = 24
           Align = alClient
           Caption = #1044#1086#1073#1072#1074#1080#1090#1100
           TabOrder = 5
           OnClick = PatButtonClick
+          ExplicitTop = 71
+          ExplicitWidth = 94
         end
         object PatDelButton: TButton
           AlignWithMargins = True
-          Left = 103
-          Top = 71
-          Width = 94
+          Left = 102
+          Top = 63
+          Width = 93
           Height = 24
           Align = alClient
           Caption = #1059#1076#1072#1083#1080#1090#1100
           TabOrder = 6
           OnClick = PatButtonClick
+          ExplicitLeft = 103
+          ExplicitTop = 71
+          ExplicitWidth = 94
         end
         object PatPostButton: TButton
           AlignWithMargins = True
-          Left = 203
-          Top = 71
-          Width = 94
+          Left = 201
+          Top = 63
+          Width = 93
           Height = 24
           Align = alClient
           Caption = #1057#1086#1093#1088#1072#1085#1080#1090#1100
           TabOrder = 7
           OnClick = PatButtonClick
+          ExplicitLeft = 203
+          ExplicitTop = 71
+          ExplicitWidth = 94
         end
         object PatCancelButton: TButton
           AlignWithMargins = True
-          Left = 303
-          Top = 71
-          Width = 94
+          Left = 300
+          Top = 63
+          Width = 93
           Height = 24
           Align = alClient
           Caption = #1054#1090#1084#1077#1085#1072
           TabOrder = 8
           OnClick = PatButtonClick
+          ExplicitLeft = 303
+          ExplicitTop = 71
+          ExplicitWidth = 94
+        end
+        object PatBirthdatePanel: TPanel
+          Left = 99
+          Top = 39
+          Width = 198
+          Height = 21
+          Align = alClient
+          BevelOuter = bvNone
+          TabOrder = 3
+          ExplicitLeft = 100
+          ExplicitTop = 43
+          ExplicitWidth = 200
+          ExplicitHeight = 25
+        end
+        object PatRegPanel: TPanel
+          Left = 396
+          Top = 39
+          Width = 202
+          Height = 21
+          Align = alClient
+          Anchors = []
+          BevelOuter = bvNone
+          TabOrder = 4
+          ExplicitLeft = 400
+          ExplicitTop = 43
+          ExplicitWidth = 204
+          ExplicitHeight = 25
         end
       end
     end
     inherited CertPanel: TPanel
-      Left = 606
       Height = 228
       Anchors = []
       ExplicitLeft = 606
       ExplicitHeight = 228
+      object CertGridSplitter: TSplitter [0]
+        Left = 0
+        Top = 94
+        Width = 230
+        Height = 4
+        Cursor = crVSplit
+        Align = alBottom
+        ExplicitTop = 95
+      end
       inherited CertGrid: TDBGrid
-        Height = 98
+        Height = 88
         Anchors = []
       end
       object CertEditGridPanel: TGridPanel
-        Left = 0
-        Top = 104
-        Width = 230
+        AlignWithMargins = True
+        Left = 3
+        Top = 101
+        Width = 224
         Height = 124
         Align = alBottom
         BevelOuter = bvNone
@@ -385,72 +452,89 @@ inherited OperForm: TOperForm
           item
             SizeStyle = ssAbsolute
             Value = 30.000000000000000000
+          end
+          item
+            SizeStyle = ssAbsolute
+            Value = 12.000000000000000000
           end>
         TabOrder = 1
+        ExplicitLeft = 0
+        ExplicitTop = 104
+        ExplicitWidth = 230
         DesignSize = (
-          230
+          224
           124)
         object CertNewButton: TButton
           Left = 0
-          Top = 96
-          Width = 57
+          Top = 84
+          Width = 56
           Height = 25
           Anchors = []
           Caption = #1044#1086#1073#1072#1074#1080#1090#1100
           TabOrder = 0
           OnClick = CertButtonClick
+          ExplicitTop = 96
         end
         object CertDelButton: TButton
-          Left = 57
-          Top = 96
-          Width = 57
+          Left = 56
+          Top = 84
+          Width = 56
           Height = 25
           Anchors = []
           Caption = #1059#1076#1072#1083#1080#1090#1100
           TabOrder = 1
           OnClick = CertButtonClick
+          ExplicitLeft = 57
+          ExplicitTop = 96
         end
         object CertPostButton: TButton
-          Left = 114
-          Top = 96
-          Width = 57
+          Left = 112
+          Top = 84
+          Width = 56
           Height = 25
           Anchors = []
           Caption = #1057#1086#1093#1088#1072#1085#1080#1090#1100
           TabOrder = 2
           OnClick = CertButtonClick
+          ExplicitLeft = 114
+          ExplicitTop = 96
         end
         object CertCancelButton: TButton
-          Left = 171
-          Top = 96
-          Width = 59
+          Left = 168
+          Top = 84
+          Width = 56
           Height = 25
           Anchors = []
           Caption = #1054#1090#1084#1077#1085#1072
           TabOrder = 3
           OnClick = CertButtonClick
+          ExplicitLeft = 171
+          ExplicitTop = 96
         end
         object CertNameEdit: TDBEdit
           AlignWithMargins = True
           Left = 3
           Top = 3
-          Width = 224
+          Width = 218
           Height = 24
           Align = alClient
           DataField = 'Name'
           DataSource = CertSource
           TabOrder = 4
+          ExplicitWidth = 224
         end
         object CertNoteEdit: TDBMemo
           AlignWithMargins = True
           Left = 3
           Top = 33
-          Width = 224
-          Height = 58
+          Width = 218
+          Height = 46
           Align = alClient
           DataField = 'notes'
           DataSource = CertSource
           TabOrder = 5
+          ExplicitWidth = 224
+          ExplicitHeight = 58
         end
       end
     end
@@ -466,6 +550,9 @@ inherited OperForm: TOperForm
     TabOrder = 3
     Visible = False
   end
+  inherited PgConnection: TFDConnection
+    Left = 195
+  end
   inherited PgCertQuery: TFDQuery
     BeforePost = PgCertQueryBeforePost
     object PgCertQuerynotes: TWideStringField
@@ -480,5 +567,11 @@ inherited OperForm: TOperForm
   end
   inherited CertSource: TDataSource
     OnStateChange = CertSourceStateChange
+  end
+  inherited PgSearchQuery: TFDQuery
+    Left = 387
+  end
+  inherited ChildActions: TActionList
+    Left = 275
   end
 end

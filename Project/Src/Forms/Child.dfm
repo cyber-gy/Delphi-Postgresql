@@ -153,6 +153,7 @@ object ChildForm: TChildForm
   object PgConnection: TFDConnection
     Params.Strings = (
       'ConnectionDef=PgParams')
+    OnError = PgConnectionError
     Left = 99
     Top = 27
   end
