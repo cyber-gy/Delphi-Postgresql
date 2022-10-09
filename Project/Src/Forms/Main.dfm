@@ -67,6 +67,7 @@ object MainForm: TMainForm
           item
             Visible = False
             Action = ActionWindowNew
+            Caption = #1044#1086#1073#1072#1074#1080#1090#1100' &browser'
           end
           item
             Action = ActionExit
@@ -86,6 +87,7 @@ object MainForm: TMainForm
               item
                 Visible = False
                 Action = ActionWindowNew
+                Caption = #1044#1086#1073#1072#1074#1080#1090#1100' &browser'
               end
               item
                 Action = ActionWindowNewStat

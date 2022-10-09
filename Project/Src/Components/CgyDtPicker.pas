@@ -18,6 +18,23 @@ uses
   System.Classes, Vcl.ComCtrls, Vcl.DBCtrls, Data.DB;
 
 type
+  TNullableDateTimePicker = class(TDateTimePicker)
+  private
+  const
+    FEmptyDateFormat = ' ';
+  var
+    FShortDateFormat: string;
+  protected
+    procedure Change; override;
+    procedure Click; override;
+    procedure DoEnter; override;
+    procedure KeyPress(var Key: Char); override;
+  public
+    procedure Clear;
+    function IsEmpty: Boolean;
+    constructor Create(AOwner: TComponent); override;
+  end;
+
   TDBDateTimePicker = class(TDateTimePicker)
   private
     FDataLink: TFieldDataLink;
@@ -40,6 +57,63 @@ type
   end;
 
 implementation
+
+uses
+  Winapi.Windows;
+
+{ TNullableDateTimePicker }
+
+procedure TNullableDateTimePicker.Change;
+begin
+  if Format = FEmptyDateFormat then begin
+    Format := FShortDateFormat;
+    SetFocus;
+  end;
+  inherited Change;
+end;
+
+procedure TNullableDateTimePicker.Clear;
+begin
+  if FShortDateFormat <> Format then begin
+    FShortDateFormat := Format
+  end;
+  Format := FEmptyDateFormat;
+end;
+
+procedure TNullableDateTimePicker.Click;
+begin
+  Change;
+  inherited Click;
+end;
+
+constructor TNullableDateTimePicker.Create(AOwner: TComponent);
+begin
+  inherited Create(AOwner);
+  //FShortDateFormat = 'dd.MM.yyyy';
+  FShortDateFormat := Format;
+end;
+
+procedure TNullableDateTimePicker.DoEnter;
+begin
+  inherited DoEnter;
+  Change;
+end;
+
+function TNullableDateTimePicker.IsEmpty: Boolean;
+begin
+  Result := Format = FEmptyDateFormat;
+end;
+
+procedure TNullableDateTimePicker.KeyPress(var Key: Char);
+begin
+  case Key of
+    Chr(VK_RETURN): Key := Char(VK_TAB);
+
+    Chr(VK_ESCAPE): Clear;
+  end;
+
+  inherited KeyPress(Key);
+end;
 
 { TDBDateTimePicker }
 

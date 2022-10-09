@@ -17,7 +17,7 @@ interface
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
   Dialogs, XPStyleActnCtrls, ActnList, ActnMan, ToolWin, ActnCtrls, ActnMenus,
-  StdCtrls, System.Actions,
+  StdCtrls, System.Actions, System.Generics.Collections,
   Child;
 
 type
@@ -41,9 +41,12 @@ type
     procedure ActionWindowNewOperExecute(Sender: TObject);
   private
     { Private declarations }
+    FFormActions: TDictionary<TContainedAction, TChildForm>;
     procedure AddNewWindow(const ACaption: string; AForm: TChildForm);
   public
     { Public declarations }
+    constructor Create(AOwner: TComponent); override;
+    destructor Destroy; override;
   end;
 
 var
@@ -72,7 +75,9 @@ begin
   i := ActionToolBar1.ActionClient.Items.Count - 1;
   while i >= 0 do begin
     ActionClientItem := ActionToolBar1.ActionClient.Items[i];
-    TChildForm(Pointer(ActionClientItem.Action.Tag)).Close;
+    if FFormActions.ContainsKey(ActionClientItem.Action) then begin
+      FFormActions[ActionClientItem.Action].Close
+    end;
     Dec(i);
   end;
 end;
@@ -96,7 +101,9 @@ begin
   i := ActionToolBar1.ActionClient.Items.Count - 1;
   if i >= 0 then begin
     ActionClientItem := ActionToolBar1.ActionClient.Items[i];
-    TChildForm(Pointer(ActionClientItem.Action.Tag)).Close;
+    if FFormActions.ContainsKey(ActionClientItem.Action) then begin
+      FFormActions[ActionClientItem.Action].Close
+    end;
   end;
 end;
 
@@ -134,15 +141,27 @@ begin
   Action.Caption := AForm.Caption;
   Action.Category := 'DynamicWindows';
 //  Action.Name := 'ActionShow' + AForm.Caption;
-  Action.Tag := NativeInt(Pointer(AForm));
   Action.ActionList := ActionList1;
   Action.OnExecute := AForm.BringToFront;
+  FFormActions.Add(Action, AForm);
 
   ActionClientItem := ActionToolBar1.ActionClient.Items.Add;
   ActionClientItem.Action := Action;
 //  ActionClientItem.Caption := Action.Caption;
   ActionManager1.AddAction(Action, nil);
   AForm.Show;
+end;
+
+constructor TMainForm.Create(AOwner: TComponent);
+begin
+  inherited Create(AOwner);
+  FFormActions := TDictionary<TContainedAction, TChildForm>.Create;
+end;
+
+destructor TMainForm.Destroy;
+begin
+  FFormActions.Free;
+  inherited Destroy;
 end;
 
 end.

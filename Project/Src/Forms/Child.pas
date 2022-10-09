@@ -10,8 +10,8 @@
 {     из пула соединений дата-модуля Db.                }
 {     Имеет базовый набор компонент для чтения,         }
 {     записи и поиска по таблицам СУБД.                 }
-{     В текущей версии функционал реализован через      }
-{     прямой доступ к ткблицам СУБД.                    }
+{     В версии 1.1 функционал реализован через          }
+{     хранимые процедуры СУБД.                          }
 {                                                       }
 {*******************************************************}
 
@@ -33,8 +33,6 @@ type
   TChildForm = class(TForm)
     SearchPanel: TPanel;
     PgConnection: TFDConnection;
-    PgPatientQuery: TFDQuery;
-    PgCertQuery: TFDQuery;
     PatientSource: TDataSource;
     CertSource: TDataSource;
     PatientNavigator: TDBNavigator;
@@ -42,42 +40,38 @@ type
     PatGrid: TDBGrid;
     CertGrid: TDBGrid;
     BrowseSplitter: TSplitter;
-    PgPatientQueryid: TIntegerField;
-    PgPatientQuerysurname: TWideStringField;
-    PgPatientQueryFirstname: TWideStringField;
-    PgPatientQueryMiddlename: TWideStringField;
-    PgPatientQueryBirthdate: TDateField;
-    PgPatientQueryCreated: TDateField;
-    PgCertQueryid: TIntegerField;
-    PgCertQueryid_patient: TIntegerField;
-    PgCertQueryName: TWideStringField;
-    PgSearchQuery: TFDQuery;
-    PgSearchQueryid: TIntegerField;
-    PgSearchQuerysurname: TWideStringField;
-    PgSearchQueryFirstname: TWideStringField;
-    PgSearchQueryMiddlename: TWideStringField;
-    PgSearchQueryBirthdate: TDateField;
-    PgSearchQueryCreated: TDateField;
     ChildActions: TActionList;
     SearchAction: TAction;
     PatientPanel: TPanel;
     CertPanel: TPanel;
+    PgSearchProc: TFDStoredProc;
+    PgPatientProc: TFDStoredProc;
+    PgCertProc: TFDStoredProc;
+    PgPatientProcid: TIntegerField;
+    PgPatientProcsurname: TWideStringField;
+    PgPatientProcFirstname: TWideStringField;
+    PgPatientProcMiddlename: TWideStringField;
+    PgPatientProcBirthdate: TDateField;
+    PgPatientProcCreated: TDateField;
+    PgCertProcid: TIntegerField;
+    PgCertProcid_patient: TIntegerField;
+    PgCertProcName: TWideStringField;
     procedure FormShow(Sender: TObject);
     procedure SearchActionExecute(Sender: TObject);
     procedure PgConnectionError(ASender, AInitiator: TObject;
       var AException: Exception);
+    procedure PgCertProcBeforeRefresh(DataSet: TDataSet);
+    procedure PgCertProcBeforeOpen(DataSet: TDataSet);
+    procedure PgPatientProcAfterScroll(DataSet: TDataSet);
   private
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
   protected
-    SearchFrame: TSearchFrame;                // Базовый фрейм поиска
-    procedure DoSearch; virtual;              // Реализация поиска в СУБД
+    SearchFrame: TSearchFrame;                          // Базовый фрейм поиска
+    procedure DoSearch(var ADoExec: Boolean); virtual;  // Реализация поиска в СУБД
   public
     procedure BringToFront(Sender: TObject);
     constructor Create(AOwner: TComponent); override;
   end;
-
-var
-  ChildForm: TChildForm;
 
 implementation
 
@@ -108,30 +102,42 @@ end;
   Процедура: TChildForm.DoSearch
   Описание: базовый поиск по фамилии
   Автор: Cyber-GY
-  Входные параметры: Нет
+  Входные параметры:
+    ADoExec - определяет необходимость выполнения хранимой процедуры
   Результат: переключение master-источника данных на результаты поиска и обратно
 -------------------------------------------------------------------------------}
-procedure TChildForm.DoSearch;
+procedure TChildForm.DoSearch(var ADoExec: Boolean);
 var
   p: TFDParam;
   s: string;
 begin
   s := Trim(SearchFrame.ValueEdit.Text);
-  if s <> '' then begin
-    // поиск по значению
-    p := PgSearchQuery.Params.FindParam('p_surname');
-    if p <> nil then begin
+  // поиск по значению
+  if not PgSearchProc.Prepared then begin
+    PgSearchProc.Prepare;
+  end;
+  p := PgSearchProc.Params.FindParam('i_surname');
+  if p <> nil then begin
+    if s <> '' then begin
       p.AsString := s;
-      if not PgSearchQuery.Active then begin
-        PgSearchQuery.OpenOrExecute
-      end else begin
-        PgSearchQuery.Refresh
-      end;
-      PatientSource.DataSet := PgSearchQuery;
+    end else begin
+      p.Clear;
     end;
+    if not ADoExec then begin
+      ADoExec := True;
+    end;
+  end;
+
+  if ADoExec then begin
+    if not PgSearchProc.Active then begin
+      PgSearchProc.OpenOrExecute
+    end else begin
+      PgSearchProc.Refresh
+    end;
+      PatientSource.DataSet := PgSearchProc;
   end else begin
     // очистка поиска
-    PatientSource.DataSet := PgPatientQuery;
+    PatientSource.DataSet := PgPatientProc;
   end;
 end;
 
@@ -161,7 +167,7 @@ begin
 
   if IsSuccess then begin
     try
-      PgPatientQuery.OpenOrExecute;
+      PgPatientProc.OpenOrExecute;
     except on E: Exception do begin
       // write to log ...
       IsSuccess := False;
@@ -172,7 +178,8 @@ begin
 
   if IsSuccess then begin
     try
-      PgCertQuery.OpenOrExecute;
+      PgCertProc.Prepare;
+      PgCertProc.OpenOrExecute;
     except on E: Exception do
       // write to log ...
       ShowMessage('Ошибка доступа к таблице:'#10 + E.Message);
@@ -190,6 +197,21 @@ end;
     AException - объект сведений об исключительной ситуации
   Результат: регистрация ошибок работы с СУБД
 -------------------------------------------------------------------------------}
+procedure TChildForm.PgCertProcBeforeOpen(DataSet: TDataSet);
+begin
+  PgCertProcBeforeRefresh(DataSet);
+end;
+
+procedure TChildForm.PgCertProcBeforeRefresh(DataSet: TDataSet);
+var
+  p: TFDParam;
+begin
+  p := PgCertProc.FindParam('i_id_patient');
+  if p <> nil then begin
+    p.AsInteger := PgPatientProcid.AsInteger;
+  end;
+end;
+
 procedure TChildForm.PgConnectionError(ASender, AInitiator: TObject;
   var AException: Exception);
 var
@@ -206,11 +228,22 @@ begin
   // write to log ...
   ShowMessage('Ошибка работы с СУБД:'#10 + AException.Message + #10#10 + s);
   // Close connection?
+  Close;
+end;
+
+procedure TChildForm.PgPatientProcAfterScroll(DataSet: TDataSet);
+begin
+  if PgCertProc.Active then begin
+    PgCertProc.Refresh;
+  end;
 end;
 
 procedure TChildForm.SearchActionExecute(Sender: TObject);
+var
+  DoExecSearch: Boolean;
 begin
-  DoSearch;
+  DoExecSearch := TrimRight(SearchFrame.ValueEdit.Text) > '';
+  DoSearch(DoExecSearch);
 end;
 
 end.

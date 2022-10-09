@@ -157,129 +157,15 @@ object ChildForm: TChildForm
     Left = 99
     Top = 27
   end
-  object PgPatientQuery: TFDQuery
-    Connection = PgConnection
-    SQL.Strings = (
-      'SELECT * FROM db_test1.patients')
-    Left = 475
-    Top = 27
-    object PgPatientQueryid: TIntegerField
-      DisplayLabel = 'Id'
-      FieldName = 'id'
-    end
-    object PgPatientQuerysurname: TWideStringField
-      DisplayLabel = #1060#1072#1084#1080#1083#1080#1103
-      DisplayWidth = 20
-      FieldName = 'surname'
-      Size = 200
-    end
-    object PgPatientQueryFirstname: TWideStringField
-      DisplayLabel = #1048#1084#1103
-      DisplayWidth = 20
-      FieldName = 'Firstname'
-      Size = 200
-    end
-    object PgPatientQueryMiddlename: TWideStringField
-      DisplayLabel = #1054#1090#1095#1077#1089#1090#1074#1086
-      DisplayWidth = 20
-      FieldName = 'Middlename'
-      Size = 200
-    end
-    object PgPatientQueryBirthdate: TDateField
-      DisplayLabel = #1044#1072#1090#1072' '#1088#1086#1078#1076#1077#1085#1080#1103
-      FieldName = 'Birthdate'
-    end
-    object PgPatientQueryCreated: TDateField
-      DisplayLabel = #1044#1072#1090#1072' '#1079#1072#1085#1077#1089#1077#1085#1080#1103
-      FieldName = 'Created'
-    end
-  end
-  object PgCertQuery: TFDQuery
-    MasterSource = PatientSource
-    MasterFields = 'id'
-    DetailFields = 'id_patient'
-    Connection = PgConnection
-    SQL.Strings = (
-      'SELECT * FROM db_test1.certificates WHERE id_patient=:id')
-    Left = 555
-    Top = 27
-    ParamData = <
-      item
-        Name = 'ID'
-        ParamType = ptInput
-        Value = Null
-      end>
-    object PgCertQueryid: TIntegerField
-      DisplayLabel = 'Id'
-      FieldName = 'id'
-    end
-    object PgCertQueryid_patient: TIntegerField
-      DisplayLabel = 'Id '#1087#1072#1094#1080#1077#1085#1090#1072
-      FieldName = 'id_patient'
-      Visible = False
-    end
-    object PgCertQueryName: TWideStringField
-      DisplayLabel = #1053#1072#1080#1084#1077#1085#1086#1074#1072#1085#1080#1077
-      DisplayWidth = 20
-      FieldName = 'Name'
-      Size = 200
-    end
-  end
   object PatientSource: TDataSource
-    DataSet = PgPatientQuery
+    DataSet = PgPatientProc
     Left = 675
     Top = 27
   end
   object CertSource: TDataSource
-    DataSet = PgCertQuery
+    DataSet = PgCertProc
     Left = 747
     Top = 27
-  end
-  object PgSearchQuery: TFDQuery
-    Connection = PgConnection
-    SQL.Strings = (
-      
-        'SELECT * FROM db_test1.patients WHERE surname LIKE '#39'%'#39' ||:p_surn' +
-        'ame|| '#39'%'#39)
-    Left = 347
-    Top = 27
-    ParamData = <
-      item
-        Name = 'P_SURNAME'
-        DataType = ftString
-        ParamType = ptInput
-        Value = Null
-      end>
-    object PgSearchQueryid: TIntegerField
-      DisplayLabel = 'Id'
-      FieldName = 'id'
-    end
-    object PgSearchQuerysurname: TWideStringField
-      DisplayLabel = #1060#1072#1084#1080#1083#1080#1103
-      DisplayWidth = 20
-      FieldName = 'surname'
-      Size = 200
-    end
-    object PgSearchQueryFirstname: TWideStringField
-      DisplayLabel = #1048#1084#1103
-      DisplayWidth = 20
-      FieldName = 'Firstname'
-      Size = 200
-    end
-    object PgSearchQueryMiddlename: TWideStringField
-      DisplayLabel = #1054#1090#1095#1077#1089#1090#1074#1086
-      DisplayWidth = 20
-      FieldName = 'Middlename'
-      Size = 200
-    end
-    object PgSearchQueryBirthdate: TDateField
-      DisplayLabel = #1044#1072#1090#1072' '#1088#1086#1078#1076#1077#1085#1080#1103
-      FieldName = 'Birthdate'
-    end
-    object PgSearchQueryCreated: TDateField
-      DisplayLabel = #1044#1072#1090#1072' '#1079#1072#1085#1077#1089#1077#1085#1080#1103
-      FieldName = 'Created'
-    end
   end
   object ChildActions: TActionList
     Left = 219
@@ -287,6 +173,107 @@ object ChildForm: TChildForm
     object SearchAction: TAction
       Caption = #1048#1089#1082#1072#1090#1100
       OnExecute = SearchActionExecute
+    end
+  end
+  object PgSearchProc: TFDStoredProc
+    Connection = PgConnection
+    SchemaName = 'db_test1'
+    StoredProcName = 'PatientsSearchBySurnameBirthdate'
+    Left = 368
+    Top = 24
+    object PgSearchProcid: TIntegerField
+      DisplayLabel = 'Id'
+      FieldName = 'id'
+    end
+    object PgSearchProcsurname: TWideStringField
+      DisplayLabel = #1060#1072#1084#1080#1083#1080#1103
+      DisplayWidth = 20
+      FieldName = 'surname'
+      Size = 200
+    end
+    object PgSearchProcFirstname: TWideStringField
+      DisplayLabel = #1048#1084#1103
+      DisplayWidth = 20
+      FieldName = 'Firstname'
+      Size = 200
+    end
+    object PgSearchProcMiddlename: TWideStringField
+      DisplayLabel = #1054#1090#1095#1077#1089#1090#1074#1086
+      DisplayWidth = 20
+      FieldName = 'Middlename'
+      Size = 200
+    end
+    object PgSearchProcBirthdate: TDateField
+      DisplayLabel = #1044#1072#1090#1072' '#1088#1086#1078#1076#1077#1085#1080#1103
+      FieldName = 'Birthdate'
+    end
+    object PgSearchProcCreated: TDateField
+      DisplayLabel = #1044#1072#1090#1072' '#1079#1072#1085#1077#1089#1077#1085#1080#1103
+      FieldName = 'Created'
+    end
+  end
+  object PgPatientProc: TFDStoredProc
+    AfterScroll = PgPatientProcAfterScroll
+    Connection = PgConnection
+    SchemaName = 'db_test1'
+    StoredProcName = 'GetPatientsAll'
+    Left = 464
+    Top = 24
+    object PgPatientProcid: TIntegerField
+      DisplayLabel = 'Id'
+      FieldName = 'id'
+    end
+    object PgPatientProcsurname: TWideStringField
+      DisplayLabel = #1060#1072#1084#1080#1083#1080#1103
+      DisplayWidth = 20
+      FieldName = 'surname'
+      Size = 200
+    end
+    object PgPatientProcFirstname: TWideStringField
+      DisplayLabel = #1048#1084#1103
+      DisplayWidth = 20
+      FieldName = 'Firstname'
+      Size = 200
+    end
+    object PgPatientProcMiddlename: TWideStringField
+      DisplayLabel = #1054#1090#1095#1077#1089#1090#1074#1086
+      DisplayWidth = 20
+      FieldName = 'Middlename'
+      Size = 200
+    end
+    object PgPatientProcBirthdate: TDateField
+      DisplayLabel = #1044#1072#1090#1072' '#1088#1086#1078#1076#1077#1085#1080#1103
+      FieldName = 'Birthdate'
+    end
+    object PgPatientProcCreated: TDateField
+      DisplayLabel = #1044#1072#1090#1072' '#1079#1072#1085#1077#1089#1077#1085#1080#1103
+      FieldName = 'Created'
+    end
+  end
+  object PgCertProc: TFDStoredProc
+    BeforeOpen = PgCertProcBeforeOpen
+    BeforeRefresh = PgCertProcBeforeRefresh
+    MasterSource = PatientSource
+    MasterFields = 'id'
+    Connection = PgConnection
+    SchemaName = 'db_test1'
+    StoredProcName = 'GetCertificates'
+    Left = 547
+    Top = 27
+    object PgCertProcid: TIntegerField
+      DisplayLabel = 'Id'
+      FieldName = 'id'
+    end
+    object PgCertProcid_patient: TIntegerField
+      DisplayLabel = 'Id '#1087#1072#1094#1080#1077#1085#1090#1072
+      FieldName = 'id_patient'
+      Visible = False
+    end
+    object PgCertProcName: TWideStringField
+      DisplayLabel = #1053#1072#1080#1084#1077#1085#1086#1074#1072#1085#1080#1077
+      DisplayWidth = 20
+      FieldName = 'Name'
+      Size = 200
     end
   end
 end

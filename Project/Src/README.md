@@ -5,14 +5,14 @@
 
 # Features  
 - Connect application to PostgreSQL server.
-- Select, search and edit data.
+- Select, search and edit data with stored procedures.
 - Each form have separate connection to DB from connection-pool.
 
 ## Files
 
 | File | Contents | 
 | --- | --- |
-| Components\CgyDtPicker.pas | TDateTimePicker component for DB |
+| Components\CgyDtPicker.pas | TDateTimePicker modified components |
 | Frames\Search.pas | Base search frame unit |
 | Forms\Oper.pas | Edit data unit |
 | Forms\Statist.pas | Statistic functions unit |

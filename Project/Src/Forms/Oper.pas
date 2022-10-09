@@ -31,16 +31,15 @@ type
     PatDelButton: TButton;
     PatPostButton: TButton;
     PatCancelButton: TButton;
-    PatSurnameEdit: TDBEdit;
-    PatFirstnameEdit: TDBEdit;
-    PatMiddlenameEdit: TDBEdit;
-    CertNameEdit: TDBEdit;
-    CertNoteEdit: TDBMemo;
+    PatSurnameEdit: TEdit;
+    PatFirstnameEdit: TEdit;
+    PatMiddlenameEdit: TEdit;
+    CertNameEdit: TEdit;
+    CertNoteEdit: TMemo;
     CertNewButton: TButton;
     CertDelButton: TButton;
     CertPostButton: TButton;
     CertCancelButton: TButton;
-    PgCertQuerynotes: TWideStringField;
     PatSurnameLabel: TLabel;
     PatFirstnameLabel: TLabel;
     PatMiddlenameLabel: TLabel;
@@ -48,28 +47,33 @@ type
     PatRegLabel: TLabel;
     PatEditGridPanel: TGridPanel;
     CertEditGridPanel: TGridPanel;
-    CertNavigator: TDBNavigator;
     PatBirthdatePanel: TPanel;
     PatRegPanel: TPanel;
     SearchTypeGroup: TRadioGroup;
     TypeSearchPanel: TPanel;
     CertGridSplitter: TSplitter;
-    procedure PatButtonClick(Sender: TObject);
-    procedure CertButtonClick(Sender: TObject);
-    procedure PatientSourceStateChange(Sender: TObject);
-    procedure CertSourceStateChange(Sender: TObject);
-    procedure PgCertQueryBeforePost(DataSet: TDataSet);
-    procedure PatEditGridPanelClick(Sender: TObject);
+    PgCertProcnotes: TWideStringField;
+    PgSetCertProc: TFDStoredProc;
+    PgDelCertProc: TFDStoredProc;
+    PgSetPatientProc: TFDStoredProc;
+    PgDelPatientProc: TFDStoredProc;
+    procedure CertChangeButtonClick(Sender: TObject);
+    procedure CertDelButtonClick(Sender: TObject);
+    procedure CertCancelButtonClick(Sender: TObject);
+    procedure PatChangeButtonClick(Sender: TObject);
+    procedure PatDelButtonClick(Sender: TObject);
+    procedure PatCancelButtonClick(Sender: TObject);
+    procedure PgPatientProcAfterScroll(DataSet: TDataSet);
+    procedure CertSourceDataChange(Sender: TObject; Field: TField);
   private
     { Private declarations }
+    PatBirthdateEdit: TDateTimePicker;
+    PatCreatedEdit: TDateTimePicker;
   protected
-    procedure DoSearch; override; // переопределение алгоритма поиска
+    procedure DoSearch(var ADoExec: Boolean); override; // переопределение алгоритма поиска
   public
     constructor Create(AOwner: TComponent); override;
   end;
-
-var
-  OperForm: TOperForm;
 
 implementation
 
@@ -77,34 +81,77 @@ implementation
 
 uses CgyDtPicker;
 
-procedure TOperForm.CertButtonClick(Sender: TObject);
+{$REGION ' Методы по изменению данных справок '}
+procedure TOperForm.CertCancelButtonClick(Sender: TObject);
 begin
-  if Sender is TButton then begin
-    CertNavigator.BtnClick(TNavigateBtn(TComponent(Sender).Tag));
+  CertNameEdit.Text := '';
+  CertNoteEdit.Clear;
+end;
+
+procedure TOperForm.CertDelButtonClick(Sender: TObject);
+begin
+  with PgDelCertProc do begin
+    ParamByName('i_id').AsInteger := PgCertProcid.AsInteger;
+    try
+      Execute;
+    except on E: Exception do
+      ShowMessage('Ошибка удаления справки:'#10 + E.Message);
+    end;
+  end;
+  PgCertProc.Refresh;
+end;
+
+procedure TOperForm.CertSourceDataChange(Sender: TObject; Field: TField);
+begin
+  if PgCertProc.Active and not PgCertProc.IsEmpty then begin
+    CertNameEdit.Text := PgCertProcName.AsWideString;
+    CertNoteEdit.Text := PgCertProcnotes.AsWideString;
+  end else begin
+    CertCancelButton.Click;
   end;
 end;
 
-{-------------------------------------------------------------------------------
-  Процедура: TOperForm.CertSourceStateChange
-  Автор: Cyber-GY
-  Входные параметры: Sender: TObject
-  Результат: меняет состояние кнопок операций с данными о справках
--------------------------------------------------------------------------------}
-procedure TOperForm.CertSourceStateChange(Sender: TObject);
+procedure TOperForm.CertChangeButtonClick(Sender: TObject);
+var
+  IsValidSender: Boolean;
 begin
-  CertNewButton.Enabled := CertNavigator.Controls[CertNewButton.Tag].Enabled;
-  CertDelButton.Enabled := CertNavigator.Controls[CertDelButton.Tag].Enabled;
-  CertPostButton.Enabled := CertNavigator.Controls[CertPostButton.Tag].Enabled;
-  CertCancelButton.Enabled := CertNavigator.Controls[CertCancelButton.Tag].Enabled;
+  IsValidSender := True;
+  //PgSetCertProc.Prepare;
+  with PgSetCertProc do begin
+    if Sender = CertNewButton then begin
+      ParamByName('i_id').Clear;
+    end else
+    if Sender = CertPostButton then begin
+      ParamByName('i_id').AsInteger := PgPatientProcid.AsInteger;
+    end else begin
+      IsValidSender := False;
+    end;
+
+    if IsValidSender then begin
+      ParamByName('i_id').Clear;
+      ParamByName('i_id_patient').AsInteger := PgPatientProcid.AsInteger;
+      ParamByName('i_name').AsWideString := CertNameEdit.Text;
+      ParamByName('i_notes').AsWideString := CertNoteEdit.text;
+      try
+        Execute;
+      except on E: Exception do
+        ShowMessage('Ошибка добавления справки:'#10 + E.Message);
+      end;
+    end;
+  end;
+  PgCertProc.Refresh;
 end;
+{$ENDREGION}
 
 constructor TOperForm.Create(AOwner: TComponent);
 
-  procedure NewDBPicker(const AFieldName: string; AParent: TWinControl);
+  procedure NewDtPicker(const AFieldName: string; var AComponent: TDateTimePicker;
+    AParent: TWinControl);
   begin
-    with TDBDateTimePicker.Create(Self) do begin
-      DataSource := PatientSource;
-      DataField := AFieldName;
+    AComponent := TNullableDateTimePicker.Create(Self);
+    with AComponent do begin
+      //DataSource := PatientSource;
+      //DataField := AFieldName;
       AlignWithMargins := True;
       Align := alClient;
       Parent := AParent;
@@ -113,94 +160,112 @@ constructor TOperForm.Create(AOwner: TComponent);
 
 begin
   inherited Create(AOwner);
-  PatNewButton.Tag := NativeInt(Vcl.DBCtrls.nbInsert);
-  PatDelButton.Tag := NativeInt(Vcl.DBCtrls.nbDelete);
-  PatPostButton.Tag := NativeInt(Vcl.DBCtrls.nbPost);
-  PatCancelButton.Tag := NativeInt(Vcl.DBCtrls.nbCancel);
 
-  CertNewButton.Tag := NativeInt(Vcl.DBCtrls.nbInsert);
-  CertDelButton.Tag := NativeInt(Vcl.DBCtrls.nbDelete);
-  CertPostButton.Tag := NativeInt(Vcl.DBCtrls.nbPost);
-  CertCancelButton.Tag := NativeInt(Vcl.DBCtrls.nbCancel);
-
-  // create custom DBDateTimePicker components
-  NewDBPicker(PgPatientQueryBirthdate.FieldName, PatBirthdatePanel);
-  NewDBPicker(PgPatientQueryCreated.FieldName, PatRegPanel);
+  // create custom DateTimePicker components
+  NewDtPicker(PgPatientProcBirthdate.FieldName, PatBirthdateEdit, PatBirthdatePanel);
+  NewDtPicker(PgPatientProcCreated.FieldName, PatCreatedEdit, PatRegPanel);
 end;
 
 {-------------------------------------------------------------------------------
   Процедура: TOperForm.DoSearch
   Автор: Cyber-GY
-  Входные параметры: Нет
+  Входные параметры:
+    ADoExec - определяет необходимость выполнения хранимой процедуры
   Результат: к базовому поиску по фамилии добавлена возможность вывода
              последних 10 записей по дате внесения.
 -------------------------------------------------------------------------------}
-procedure TOperForm.DoSearch;
+procedure TOperForm.DoSearch(var ADoExec: Boolean);
 const
-  ConditionCount = 'ORDER BY created DESC'#10#13'FETCH FIRST 1 ROWS ONLY';
-var
-  s: string;
-  p: TFDParam;
+  SnAndBdSearchProcName = 'PatientsSearchBySurnameBirthdate';
+  SnSearchLast10ByProcName = 'PatientsSearchBySurnameLastCreated';
 begin
-  // очистка условий запроса
-  while PgSearchQuery.SQL.Count > 1 do begin
-    PgSearchQuery.SQL.Delete(1);
-  end;
-
   case SearchTypeGroup.ItemIndex of
     0: begin
-      // поиск только по фамилии
-      inherited DoSearch;
+      // поиск всех по фамилии
+      if PgSearchProc.StoredProcName <> SnAndBdSearchProcName then begin
+        PgSearchProc.StoredProcName := SnAndBdSearchProcName;
+      end;
     end;
     1: begin
-      s := Trim(SearchFrame.ValueEdit.Text);
-      p := PgSearchQuery.FindParam('p_surname');
-      if s <> '' then begin
-        // доп. фильтр по фамилии
-        p.AsString := s;
-      end else begin
-        p.AsString := '%'
+      // поиск последних 10 по фамилии
+      if PgSearchProc.StoredProcName <> SnSearchLast10ByProcName then begin
+        PgSearchProc.StoredProcName := SnSearchLast10ByProcName;
       end;
-      // выбор последних 10 занесённых с/без фильтра по фамилии
-      PgSearchQuery.SQL.Add(ConditionCount);
-      PgSearchQuery.OpenOrExecute;
-      PatientSource.DataSet := PgSearchQuery;
+      if not ADoExec then begin
+        ADoExec := True;
+      end;
     end;
   end;
+  inherited DoSearch(ADoExec);
 end;
 
-procedure TOperForm.PatButtonClick(Sender: TObject);
+{$REGION ' Методы по изменению данных пациентов '}
+procedure TOperForm.PatCancelButtonClick(Sender: TObject);
 begin
-  if Sender is TButton then begin
-    PatientNavigator.BtnClick(TNavigateBtn(TComponent(Sender).Tag));
+  PatSurnameEdit.Text := '';
+  PatFirstnameEdit.Text := '';
+  PatMiddlenameEdit.Text := '';
+  (PatBirthdateEdit as TNullableDateTimePicker).Clear;
+  (PatCreatedEdit as TNullableDateTimePicker).Clear;
+end;
+
+procedure TOperForm.PatChangeButtonClick(Sender: TObject);
+var
+  IsValidSender: Boolean;
+begin
+  IsValidSender := True;
+  with PgSetPatientProc do begin
+    if Sender = PatNewButton then begin
+      ParamByName('i_id').Clear;
+    end else
+    if Sender = PatPostButton then begin
+      ParamByName('i_id').AsInteger := PgPatientProcid.AsInteger;
+    end else begin
+      IsValidSender := False;
+    end;
+
+    if IsValidSender then begin
+      ParamByName('i_surname').AsWideString := PatSurnameEdit.Text;
+      ParamByName('i_firstname').AsWideString := PatFirstnameEdit.Text;
+      ParamByName('i_middlename').AsWideString := PatMiddlenameEdit.Text;
+      ParamByName('i_birthdate').AsDate := PatBirthdateEdit.Date;
+      ParamByName('i_created').AsDate := PatCreatedEdit.Date;
+      try
+        Execute;
+      except on E: Exception do
+        ShowMessage('Ошибка добавления пациента:'#10 + E.Message);
+      end;
+    end;
   end;
+  PgPatientProc.Refresh;
 end;
 
-procedure TOperForm.PatEditGridPanelClick(Sender: TObject);
+procedure TOperForm.PatDelButtonClick(Sender: TObject);
 begin
+  with PgDelPatientProc do begin
+    ParamByName('i_id').AsInteger := PgPatientProcid.AsInteger;
+    try
+      Execute;
+    except on E: Exception do
+      ShowMessage('Ошибка удаления пациента:'#10 + E.Message);
+    end;
+  end;
+  PgPatientProc.Refresh;
+end;
+
+procedure TOperForm.PgPatientProcAfterScroll(DataSet: TDataSet);
+begin
+  if DataSet.Active and not DataSet.IsEmpty then begin
+    PatSurnameEdit.Text := PgPatientProcSurName.AsWideString;
+    PatFirstnameEdit.Text := PgPatientProcFirstName.AsWideString;
+    PatMiddlenameEdit.Text := PgPatientProcMiddleName.AsWideString;
+    PatBirthDateEdit.Date := PgPatientProcBirthdate.AsDateTime;
+    PatCreatedEdit.Date := PgPatientProcCreated.AsDateTime;
+  end else begin
+    PatCancelButton.Click;
+  end;
   inherited;
-
 end;
-
-{-------------------------------------------------------------------------------
-  Процедура: TOperForm.PatientSourceStateChange
-  Автор: Cyber-GY
-  Входные параметры: Sender: TObject
-  Результат: меняет состояние кнопок операций с данными о пациентах
--------------------------------------------------------------------------------}
-procedure TOperForm.PatientSourceStateChange(Sender: TObject);
-begin
-  PatNewButton.Enabled := PatientNavigator.Controls[PatNewButton.Tag].Enabled;
-  PatDelButton.Enabled := PatientNavigator.Controls[PatDelButton.Tag].Enabled;
-  PatPostButton.Enabled := PatientNavigator.Controls[PatPostButton.Tag].Enabled;
-  PatCancelButton.Enabled := PatientNavigator.Controls[PatCancelButton.Tag].Enabled;
-end;
-
-procedure TOperForm.PgCertQueryBeforePost(DataSet: TDataSet);
-begin
-  if PgCertQueryid_patient.IsNull then begin
-    PgCertQueryid_patient.AsInteger := PgPatientQueryid.AsInteger // внешний ключ таблицы
-  end;
-end;
+{$ENDREGION}
 
 end.

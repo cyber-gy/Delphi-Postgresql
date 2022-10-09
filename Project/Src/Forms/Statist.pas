@@ -28,85 +28,92 @@ uses
 
 type
   TStatForm = class(TChildForm)
-    DateSeachPanel: TPanel;
+    DateSearchPanel: TPanel;
     DateEdit1: TDateTimePicker;
     DateEdit2: TDateTimePicker;
     DateSearchGroup: TRadioGroup;
-    procedure DateEdit1Change(Sender: TObject);
-    procedure DateEdit1KeyPress(Sender: TObject; var Key: Char);
-    procedure DateEdit1Exit(Sender: TObject);
-    procedure DateEdit1Click(Sender: TObject);
+    procedure DateEditKeyPress(Sender: TObject; var Key: Char);
+    procedure DateEditExit(Sender: TObject);
   private
     { Private declarations }
   protected
-    procedure DoSearch; override; // переопределение алгоритма поиска
+    procedure DoSearch(var ADoExec: Boolean); override; // переопределение алгоритма поиска
   public
     constructor Create(AOwner: TComponent); override;
   end;
-
-var
-  StatForm: TStatForm;
 
 implementation
 
 {$R *.dfm}
 
-const
-  EmptyDateFormat = ' ';
-  ShortDateFormat = 'dd.MM.yyyy';
-
-type
-  TMyWinControl = class(TWinControl);  // access protected methods
+uses
+  CgyDtPicker;
 
 constructor TStatForm.Create(AOwner: TComponent);
+
+  procedure SubstControl(var AControl: TDateTimePicker);
+  var
+    tmp: TNullableDateTimePicker;
+  begin
+    tmp := TNullableDateTimePicker.Create(Self);
+    with tmp do begin
+      Parent := AControl.Parent;
+      AlignWithMargins := AControl.AlignWithMargins;
+      Left := AControl.Left;
+      Top := AControl.Top;
+      Width := AControl.Width;
+      Height := AControl.Height;
+      Date := AControl.Date;
+      Format := AControl.Format;
+      Time := AControl.Time;
+      //TabOrder := AControl.TabOrder;
+      OnKeyPress := DateEditKeyPress;
+      OnExit := DateEditExit;
+    end;
+    FreeAndNil(AControl);
+    AControl := tmp;
+  end;
+
 begin
   inherited Create(AOwner);
+
   DateEdit1.Date := Now();
   DateEdit2.Date := Now();
+
+  SubstControl(DateEdit1);
+  SubstControl(DateEdit2);
+
+  DateEdit1.TabOrder := 1;
+  DateEdit2.TabOrder := 2;
 end;
 
 {$REGION ' Поведение TDateTimePicker '}
-procedure TStatForm.DateEdit1Change(Sender: TObject);
+procedure TStatForm.DateEditExit(Sender: TObject);
 begin
-  if TDateTimePicker(Sender).Format = EmptyDateFormat then begin
-    TDateTimePicker(Sender).Format := ShortDateFormat;
-    TDateTimePicker(Sender).SetFocus;
-  end;
-end;
-
-procedure TStatForm.DateEdit1Click(Sender: TObject);
-begin
-  DateEdit1Change(Sender);
-end;
-
-procedure TStatForm.DateEdit1Exit(Sender: TObject);
-begin
-  if (Sender = DateEdit1) and (DateEdit2.Format = EmptyDateFormat)
-    and (DateEdit1.Format <> EmptyDateFormat) then
+  // Заполняем значением парный компонент "календарь"
+  if (Sender = DateEdit1) and (DateEdit2 as TNullableDateTimePicker).IsEmpty
+    and not (DateEdit1 as TNullableDateTimePicker).IsEmpty then
   begin
-    DateEdit2.Format := ShortDateFormat;
     DateEdit2.Date := DateEdit1.Date;
   end else
-  if (Sender = DateEdit2) and (DateEdit1.Format = EmptyDateFormat)
-    and (DateEdit2.Format <> EmptyDateFormat) then
+  if (Sender = DateEdit2) and (DateEdit1 as TNullableDateTimePicker).IsEmpty
+    and not (DateEdit2 as TNullableDateTimePicker).IsEmpty then
   begin
-    DateEdit1.Format := ShortDateFormat;
     DateEdit1.Date := DateEdit2.Date;
   end;
 end;
 
-procedure TStatForm.DateEdit1KeyPress(Sender: TObject; var Key: Char);
+procedure TStatForm.DateEditKeyPress(Sender: TObject; var Key: Char);
 begin
-  case Key of
-    Chr(VK_RETURN): if (Sender is TWinControl) and (TWinControl(Sender).Parent <> nil) then begin
-      TMyWinControl(TWinControl(Sender).Parent).SelectNext(TWinControl(Sender), True, True);
-      //SearchAction.Execute;
+  if Key = Chr(VK_ESCAPE) then begin
+    // Очищаем оба парных компонента
+    if (Sender = DateEdit1) and not (DateEdit2 as TNullableDateTimePicker).IsEmpty then begin
+      (DateEdit2 as TNullableDateTimePicker).Clear;
+    end else
+    if (Sender = DateEdit2) and not (DateEdit1 as TNullableDateTimePicker).IsEmpty then begin
+      (DateEdit1 as TNullableDateTimePicker).Clear;
     end;
-    Chr(VK_ESCAPE): begin
-      DateEdit1.Format := EmptyDateFormat;
-      DateEdit2.Format := EmptyDateFormat;
-      SearchAction.Execute;
-    end;
+    SearchAction.Execute;
   end;
 end;
 {$ENDREGION}
@@ -114,57 +121,66 @@ end;
 {-------------------------------------------------------------------------------
   Процедура: TStatForm.DoSearch
   Автор: Cyber-GY
-  Входные параметры: Нет
+  Входные параметры: 
+    ADoExec - определяет необходимость выполнения хранимой процедуры
   Результат: к базовому поиску по фамилии добавлены возможности фильтра по
              диапазону дат.
 -------------------------------------------------------------------------------}
-procedure TStatForm.DoSearch;
+procedure TStatForm.DoSearch(var ADoExec: Boolean);
 const
-  ConditionStr = 'surname LIKE ''%'' ||:p_surname|| ''%''';
-  ConditionDate1 = 'birthdate BETWEEN :p_date1 AND :p_date2';
-  ConditionDate2 = 'created BETWEEN :p_date1 AND :p_date2';
+  SnAndBdSearchProcName = 'PatientsSearchBySurnameBirthdate';
+  SnAndCrSearchProcName = 'PatientsSearchBySurnameCreated';
 
+  procedure ClearParam(const AParamName: string);
+  var
+    p: TFDParam;
+  begin
+    p := PgSearchProc.FindParam(AParamName);
+    if (p <> nil) then begin
+      p.Clear();
+    end;
+  end;
+  
 var
-  s: string;
   p: TFDParam;
 begin
-  // очистка условий запроса
-  while PgSearchQuery.SQL.Count > 1 do begin
-    PgSearchQuery.SQL.Delete(1);
-  end;
-  PgSearchQuery.Params.Clear;
 
-  if DateEdit1.Format = EmptyDateFormat then begin
+  if (DateEdit1 as TNullableDateTimePicker).IsEmpty
+    or (DateEdit2 as TNullableDateTimePicker).IsEmpty then 
+  begin
+    if PgSearchProc.Prepared then begin
+      ClearParam('i_date_first');
+      ClearParam('i_date_last');      
+    end;
     // поиск только по фамилии
-    PgSearchQuery.Params.Add('p_surname', ftString, 200, ptInput);
-    PgSearchQuery.SQL.Add(ConditionStr);
-    inherited DoSearch;
+    inherited DoSearch(ADoExec);
   end else begin
-    s := Trim(SearchFrame.ValueEdit.Text);
-    if s <> '' then begin
-      // поиск по фамилии и...
-      p := PgSearchQuery.Params.Add('p_surname', ftString, 200, ptInput);
-      p.AsString := s;
-      PgSearchQuery.SQL.Add(ConditionStr);
-      PgSearchQuery.SQL.Add(' AND ');
-    end;
-
     // по датам
-    p := PgSearchQuery.Params.Add('p_date1', Data.DB.ftDate, -1, ptInput);
-    p.AsDate := DateEdit1.Date;
-    p := PgSearchQuery.Params.Add('p_date2', Data.DB.ftDate, -1, ptInput);
-    p.AsDate := DateEdit2.Date;
     case DateSearchGroup.ItemIndex of
-      0: PgSearchQuery.SQL.Add(ConditionDate1);
-      1: PgSearchQuery.SQL.Add(ConditionDate2);
+      0: PgSearchProc.StoredProcName := SnAndBdSearchProcName;
+      1: PgSearchProc.StoredProcName := SnAndCrSearchProcName;
     end;
 
-    if not PgSearchQuery.Active then begin
-      PgSearchQuery.OpenOrExecute
-    end else begin
-      PgSearchQuery.Refresh
+    if not PgSearchProc.Prepared then begin
+      PgSearchProc.Prepare;
     end;
-    PatientSource.DataSet := PgSearchQuery;
+    p := PgSearchProc.FindParam('i_date_first');
+    if p <> nil then begin    
+      p.AsDate := DateEdit1.Date;
+      ADoExec := True;
+    end else begin
+      ADoExec := False;
+    end;      
+    p := PgSearchProc.FindParam('i_date_last');
+    if (p <> nil) and ADoExec then 
+    begin
+      p.AsDate := DateEdit2.Date;
+      ADoExec := True;
+    end else begin
+      ADoExec := False;
+    end;      
+
+    inherited DoSearch(ADoExec);
   end;
 end;
 

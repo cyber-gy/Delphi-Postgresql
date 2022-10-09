@@ -22,4 +22,9 @@ Multiform db-pool-connections Delphi project ( Pg, FireDAC )
 
 1. Project was developed and tested in Delphi 10.2
 2. FireDAC components needs 32-bit Postgre client.
-3. Config file "pg_connect.ini" required in executed file dir.
+3. Config file "pg_connect.ini" is required in executed file dir.
+
+## Changes
+
+1.1 Current release - access db data throw stored procedures. Refactoring.
+1.0 First release with direct access to db data.

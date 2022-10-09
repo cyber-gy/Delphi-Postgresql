@@ -3,7 +3,7 @@ inherited StatForm: TStatForm
   PixelsPerInch = 120
   TextHeight = 16
   inherited SearchPanel: TPanel
-    object DateSeachPanel: TPanel
+    object DateSearchPanel: TPanel
       AlignWithMargins = True
       Left = 5
       Top = 5
@@ -22,10 +22,8 @@ inherited StatForm: TStatForm
         Format = ' '
         Time = 44833.660413148150000000
         TabOrder = 1
-        OnClick = DateEdit1Click
-        OnChange = DateEdit1Change
-        OnExit = DateEdit1Exit
-        OnKeyPress = DateEdit1KeyPress
+        OnExit = DateEditExit
+        OnKeyPress = DateEditKeyPress
       end
       object DateEdit2: TDateTimePicker
         AlignWithMargins = True
@@ -37,9 +35,8 @@ inherited StatForm: TStatForm
         Format = ' '
         Time = 44833.660413148150000000
         TabOrder = 2
-        OnChange = DateEdit1Change
-        OnExit = DateEdit1Exit
-        OnKeyPress = DateEdit1KeyPress
+        OnExit = DateEditExit
+        OnKeyPress = DateEditKeyPress
       end
       object DateSearchGroup: TRadioGroup
         Left = 16
@@ -76,13 +73,6 @@ inherited StatForm: TStatForm
   inherited PgConnection: TFDConnection
     Left = 419
   end
-  inherited PgPatientQuery: TFDQuery
-    Left = 587
-  end
-  inherited PgCertQuery: TFDQuery
-    Left = 651
-    Top = 43
-  end
   inherited PatientSource: TDataSource
     Left = 763
     Top = 3
@@ -90,12 +80,6 @@ inherited StatForm: TStatForm
   inherited CertSource: TDataSource
     Left = 763
     Top = 35
-  end
-  inherited PgSearchQuery: TFDQuery
-    SQL.Strings = (
-      'SELECT * FROM db_test1.patients WHERE ')
-    Left = 523
-    Top = 11
   end
   inherited ChildActions: TActionList
     Left = 363

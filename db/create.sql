@@ -48,4 +48,141 @@ INSERT INTO "db_test1"."patients" ("surname", "firstname", "middlename", "birthd
 INSERT INTO "db_test1"."certificates" ("id_patient", "name", "notes") VALUES 
 (1, 'Справка', 'Для Ивана...'),
 (1, 'Поправка', 'по справке...'),
-(2, 'Справка', 'Для Петра...')
+(2, 'Справка', 'Для Петра...');
+
+CREATE FUNCTION PatientsSearchBySurnameBirthdate(IN i_surname VARCHAR, IN i_date_first DATE DEFAULT NULL, IN i_date_last DATE DEFAULT NULL) RETURNS refcursor AS '
+DECLARE
+    ref refcursor;
+BEGIN
+  OPEN ref FOR 
+    WITH d_range AS (
+      SELECT MAX(p.birthdate) AS d_max, MIN(p.birthdate) AS d_min
+      FROM db_test1.patients p
+    )
+    SELECT p.id, p.surname, p.firstname, p.middlename, p.birthdate, p.created
+    FROM db_test1.patients p
+    CROSS JOIN d_range r
+    WHERE p.surname LIKE ''%''|| COALESCE(i_surname, p.surname) ||''%''
+    AND p.birthdate BETWEEN COALESCE(i_date_first, r.d_min) AND  COALESCE(i_date_last, r.d_max);
+  RETURN ref;
+END;
+' LANGUAGE plpgsql;
+
+CREATE FUNCTION PatientsSearchBySurnameCreated(IN i_surname VARCHAR, IN i_date_first DATE DEFAULT NULL, IN i_date_last DATE DEFAULT NULL) RETURNS refcursor AS '
+DECLARE
+    ref refcursor;
+BEGIN
+  OPEN ref FOR 
+    WITH d_range AS (
+      SELECT MAX(p.created) AS d_max, MIN(p.created) AS d_min
+      FROM db_test1.patients p
+    )
+    SELECT p.id, p.surname, p.firstname, p.middlename, p.birthdate, p.created
+    FROM db_test1.patients p
+    CROSS JOIN d_range r
+    WHERE p.surname LIKE ''%''|| COALESCE(i_surname, p.surname) ||''%''
+    AND p.created BETWEEN COALESCE(i_date_first, r.d_min) AND  COALESCE(i_date_last, r.d_max);
+  RETURN ref;
+END;
+' LANGUAGE plpgsql;
+
+CREATE FUNCTION PatientsSearchBySurnameLastCreated(IN i_surname VARCHAR, IN i_count INT DEFAULT 10) RETURNS refcursor AS '
+DECLARE
+    ref refcursor;
+BEGIN
+  OPEN ref FOR 
+    SELECT p.id, p.surname, p.firstname, p.middlename, p.birthdate, p.created
+    FROM db_test1.patients p
+    WHERE p.surname LIKE ''%''|| COALESCE(i_surname, p.surname) ||''%''
+    ORDER BY p.created DESC
+    FETCH FIRST i_count ROWS ONLY;
+  RETURN ref;
+END;
+' LANGUAGE plpgsql;
+
+CREATE FUNCTION GetPatientsAll() RETURNS refcursor AS '
+DECLARE
+    ref refcursor;
+BEGIN
+  OPEN ref FOR 
+    SELECT p.id, p.surname, p.firstname, p.middlename, p.birthdate, p.created
+    FROM db_test1.patients p;
+  RETURN ref;
+END;
+' LANGUAGE plpgsql;
+
+CREATE FUNCTION GetCertificates(i_id_patient INT) RETURNS refcursor AS '
+DECLARE
+    ref refcursor;
+BEGIN
+  OPEN ref FOR 
+    SELECT c.id, c.id_patient, c.name, c.notes
+    FROM db_test1.certificates c
+    WHERE c.id_patient = i_id_patient;
+  RETURN ref;
+END;
+' LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION db_test1.SetCertificate(
+  INOUT i_id INTEGER, 
+  IN i_id_patient INTEGER, 
+  IN i_name VARCHAR,
+  IN i_notes VARCHAR)
+RETURNS INTEGER
+AS ' 
+BEGIN
+  IF COALESCE(i_id, 0) = 0 THEN
+    INSERT INTO db_test1.certificates (id_patient, name, notes)
+    VALUES(i_id_patient, i_name, i_notes)
+    RETURNING id INTO i_id;
+  ELSE
+    UPDATE db_test1.certificates c
+    SET id_patient = i_id_patient, NAME = i_name, notes = i_notes
+    WHERE c.id = i_id;
+  END IF;
+  RETURN;
+END' LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION db_test1.DelCertificate(IN i_id INTEGER)
+RETURNS INTEGER
+AS ' 
+BEGIN
+  DELETE FROM db_test1.certificates c
+  WHERE c.id = i_id;
+  RETURN i_id;
+END' LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION db_test1.SetPatient(
+  INOUT i_id INTEGER, 
+  IN i_surname VARCHAR,
+  IN i_firstname VARCHAR,
+  IN i_middlename VARCHAR,
+  IN i_birthdate DATE,
+  IN i_created DATE)
+RETURNS INTEGER
+AS ' 
+BEGIN
+  IF COALESCE(i_id, 0) = 0 THEN
+    INSERT INTO db_test1.patients (surname, firstname, middlename, birthdate, created)
+    VALUES(i_surname, i_firstname, i_middlename, i_birthdate, i_created)
+    RETURNING id INTO i_id;
+  ELSE
+    UPDATE db_test1.patients
+    SET surname = i_surname, 
+      firstname = i_firstname, 
+      middlename = i_middlename, 
+      birthdate = i_birthdate, 
+      created = i_created
+    WHERE id = i_id;
+  END IF;
+  RETURN;
+END' LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION db_test1.DelPatient(IN i_id INTEGER)
+RETURNS INTEGER
+AS ' 
+BEGIN
+  DELETE FROM db_test1.patients p
+  WHERE p.id = i_id;
+  RETURN i_id;
+END' LANGUAGE plpgsql;
