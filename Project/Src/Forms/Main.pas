@@ -40,11 +40,11 @@ type
     procedure ActionWindowNewStatExecute(Sender: TObject);
     procedure ActionWindowNewOperExecute(Sender: TObject);
   private
-    { Private declarations }
-    FFormActions: TDictionary<TContainedAction, TChildForm>;
+    // Справочник связи с дочерними формами через TAction
+    FChildFormActions: TDictionary<TContainedAction, TChildForm>;
+    // Создание дочернего окна
     procedure AddNewWindow(const ACaption: string; AForm: TChildForm);
   public
-    { Public declarations }
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
   end;
@@ -75,8 +75,8 @@ begin
   i := ActionToolBar1.ActionClient.Items.Count - 1;
   while i >= 0 do begin
     ActionClientItem := ActionToolBar1.ActionClient.Items[i];
-    if FFormActions.ContainsKey(ActionClientItem.Action) then begin
-      FFormActions[ActionClientItem.Action].Close
+    if FChildFormActions.ContainsKey(ActionClientItem.Action) then begin
+      FChildFormActions[ActionClientItem.Action].Close
     end;
     Dec(i);
   end;
@@ -101,22 +101,40 @@ begin
   i := ActionToolBar1.ActionClient.Items.Count - 1;
   if i >= 0 then begin
     ActionClientItem := ActionToolBar1.ActionClient.Items[i];
-    if FFormActions.ContainsKey(ActionClientItem.Action) then begin
-      FFormActions[ActionClientItem.Action].Close
+    if FChildFormActions.ContainsKey(ActionClientItem.Action) then begin
+      FChildFormActions[ActionClientItem.Action].Close
     end;
   end;
 end;
 
+{-------------------------------------------------------------------------------
+  Процедура: TMainForm.ActionWindowNewExecute
+  Автор: Cyber-GY
+  Входные параметры: Sender: TObject
+  Результат: создание технической дочерней формы
+-------------------------------------------------------------------------------}
 procedure TMainForm.ActionWindowNewExecute(Sender: TObject);
 begin
   AddNewWindow('Просмотр данных', TChildForm.Create(Self));
 end;
 
+{-------------------------------------------------------------------------------
+  Процедура: TMainForm.ActionWindowNewOperExecute
+  Автор: Cyber-GY
+  Входные параметры: Sender: TObject
+  Результат: создание дочерней формы "АРМ оператора"
+-------------------------------------------------------------------------------}
 procedure TMainForm.ActionWindowNewOperExecute(Sender: TObject);
 begin
   AddNewWindow('АРМ оператора', TOperForm.Create(Self))
 end;
 
+{-------------------------------------------------------------------------------
+  Процедура: TMainForm.ActionWindowNewStatExecute
+  Автор: Cyber-GY
+  Входные параметры: Sender: TObject
+  Результат: создание дочерней формы "АРМ статистика"
+-------------------------------------------------------------------------------}
 procedure TMainForm.ActionWindowNewStatExecute(Sender: TObject);
 begin
   AddNewWindow('АРМ статиста', TStatForm.Create(Self))
@@ -143,7 +161,7 @@ begin
 //  Action.Name := 'ActionShow' + AForm.Caption;
   Action.ActionList := ActionList1;
   Action.OnExecute := AForm.BringToFront;
-  FFormActions.Add(Action, AForm);
+  FChildFormActions.Add(Action, AForm);
 
   ActionClientItem := ActionToolBar1.ActionClient.Items.Add;
   ActionClientItem.Action := Action;
@@ -155,12 +173,12 @@ end;
 constructor TMainForm.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
-  FFormActions := TDictionary<TContainedAction, TChildForm>.Create;
+  FChildFormActions := TDictionary<TContainedAction, TChildForm>.Create;
 end;
 
 destructor TMainForm.Destroy;
 begin
-  FFormActions.Free;
+  FChildFormActions.Free;
   inherited Destroy;
 end;
 

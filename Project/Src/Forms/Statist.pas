@@ -80,6 +80,7 @@ begin
   DateEdit1.Date := Now();
   DateEdit2.Date := Now();
 
+  // замена стандартного календаря своим
   SubstControl(DateEdit1);
   SubstControl(DateEdit2);
 
@@ -87,7 +88,7 @@ begin
   DateEdit2.TabOrder := 2;
 end;
 
-{$REGION ' Поведение TDateTimePicker '}
+{$REGION ' Парное поведение TDateTimePicker '}
 procedure TStatForm.DateEditExit(Sender: TObject);
 begin
   // Заполняем значением парный компонент "календарь"

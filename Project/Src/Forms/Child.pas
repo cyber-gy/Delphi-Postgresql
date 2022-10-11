@@ -202,6 +202,12 @@ begin
   PgCertProcBeforeRefresh(DataSet);
 end;
 
+{-------------------------------------------------------------------------------
+  Процедура: TChildForm.PgCertProcBeforeRefresh
+  Автор: Cyber-GY
+  Входные параметры: DataSet: TDataSet
+  Результат: обновление ключа управляющего набора данных
+-------------------------------------------------------------------------------}
 procedure TChildForm.PgCertProcBeforeRefresh(DataSet: TDataSet);
 var
   p: TFDParam;
@@ -212,6 +218,12 @@ begin
   end;
 end;
 
+{-------------------------------------------------------------------------------
+  Процедура: TChildForm.PgConnectionError
+  Автор: Cyber-GY
+  Входные параметры: ASender, AInitiator: TObject; var AException: Exception
+  Результат: обработка ошибок подключения
+-------------------------------------------------------------------------------}
 procedure TChildForm.PgConnectionError(ASender, AInitiator: TObject;
   var AException: Exception);
 var
@@ -231,6 +243,12 @@ begin
   Close;
 end;
 
+{-------------------------------------------------------------------------------
+  Процедура: TChildForm.PgPatientProcAfterScroll
+  Автор: Cyber-GY
+  Входные параметры: DataSet: TDataSet
+  Результат: синхронизация подконтрольного набора данных
+-------------------------------------------------------------------------------}
 procedure TChildForm.PgPatientProcAfterScroll(DataSet: TDataSet);
 begin
   if PgCertProc.Active then begin
@@ -243,6 +261,7 @@ var
   DoExecSearch: Boolean;
 begin
   DoExecSearch := TrimRight(SearchFrame.ValueEdit.Text) > '';
+  // выполнить поисковый запрос, если введено значение для поиска
   DoSearch(DoExecSearch);
 end;
 

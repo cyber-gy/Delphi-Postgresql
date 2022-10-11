@@ -67,8 +67,8 @@ type
     procedure CertSourceDataChange(Sender: TObject; Field: TField);
   private
     { Private declarations }
-    PatBirthdateEdit: TDateTimePicker;
-    PatCreatedEdit: TDateTimePicker;
+    PatBirthdateEdit: TDateTimePicker;                // календарь даты рождения
+    PatCreatedEdit: TDateTimePicker;                  // календарь даты занесения
   protected
     procedure DoSearch(var ADoExec: Boolean); override; // переопределение алгоритма поиска
   public
@@ -82,12 +82,24 @@ implementation
 uses CgyDtPicker;
 
 {$REGION ' Методы по изменению данных справок '}
+{-------------------------------------------------------------------------------
+  Процедура: TOperForm.CertCancelButtonClick
+  Автор: Cyber-GY
+  Входные параметры: Sender: TObject
+  Результат: очистка редакторов
+-------------------------------------------------------------------------------}
 procedure TOperForm.CertCancelButtonClick(Sender: TObject);
 begin
   CertNameEdit.Text := '';
   CertNoteEdit.Clear;
 end;
 
+{-------------------------------------------------------------------------------
+  Процедура: TOperForm.CertDelButtonClick
+  Автор: Cyber-GY
+  Входные параметры: Sender: TObject
+  Результат: удаление справки в базе данных
+-------------------------------------------------------------------------------}
 procedure TOperForm.CertDelButtonClick(Sender: TObject);
 begin
   with PgDelCertProc do begin
@@ -101,6 +113,12 @@ begin
   PgCertProc.Refresh;
 end;
 
+{-------------------------------------------------------------------------------
+  Процедура: TOperForm.CertSourceDataChange
+  Автор: Cyber-GY
+  Входные параметры: Sender: TObject; Field: TField
+  Результат: обновление данных редакторов
+-------------------------------------------------------------------------------}
 procedure TOperForm.CertSourceDataChange(Sender: TObject; Field: TField);
 begin
   if PgCertProc.Active and not PgCertProc.IsEmpty then begin
@@ -111,6 +129,12 @@ begin
   end;
 end;
 
+{-------------------------------------------------------------------------------
+  Процедура: TOperForm.CertChangeButtonClick
+  Автор: Cyber-GY
+  Входные параметры: Sender: TObject
+  Результат: занесение данных редакторов в базу
+-------------------------------------------------------------------------------}
 procedure TOperForm.CertChangeButtonClick(Sender: TObject);
 var
   IsValidSender: Boolean;
@@ -200,6 +224,12 @@ begin
 end;
 
 {$REGION ' Методы по изменению данных пациентов '}
+{-------------------------------------------------------------------------------
+  Процедура: TOperForm.PatCancelButtonClick
+  Автор: Cyber-GY
+  Входные параметры: Sender: TObject
+  Результат: очистка редакторов
+-------------------------------------------------------------------------------}
 procedure TOperForm.PatCancelButtonClick(Sender: TObject);
 begin
   PatSurnameEdit.Text := '';
@@ -209,6 +239,12 @@ begin
   (PatCreatedEdit as TNullableDateTimePicker).Clear;
 end;
 
+{-------------------------------------------------------------------------------
+  Процедура: TOperForm.PatChangeButtonClick
+  Автор: Cyber-GY
+  Входные параметры: Sender: TObject
+  Результат: занесение данных в базу
+-------------------------------------------------------------------------------}
 procedure TOperForm.PatChangeButtonClick(Sender: TObject);
 var
   IsValidSender: Boolean;
@@ -240,6 +276,12 @@ begin
   PgPatientProc.Refresh;
 end;
 
+{-------------------------------------------------------------------------------
+  Процедура: TOperForm.PatDelButtonClick
+  Автор: Cyber-GY
+  Входные параметры: Sender: TObject
+  Результат: удаление пациента из базы данных
+-------------------------------------------------------------------------------}
 procedure TOperForm.PatDelButtonClick(Sender: TObject);
 begin
   with PgDelPatientProc do begin
@@ -253,14 +295,29 @@ begin
   PgPatientProc.Refresh;
 end;
 
+{-------------------------------------------------------------------------------
+  Процедура: TOperForm.PgPatientProcAfterScroll
+  Автор: Cyber-GY
+  Входные параметры: DataSet: TDataSet
+  Результат: обновление данных в редакторах
+-------------------------------------------------------------------------------}
 procedure TOperForm.PgPatientProcAfterScroll(DataSet: TDataSet);
+
+  procedure UpdateDateEdit(AControl: TNullableDateTimePicker; AValue: TDateTime);
+  begin
+    AControl.Date := AValue;
+    if AControl.IsEmpty then begin
+      AControl.SetFocus;     // вызов события изменений компонента
+    end;
+  end;
+
 begin
   if DataSet.Active and not DataSet.IsEmpty then begin
     PatSurnameEdit.Text := PgPatientProcSurName.AsWideString;
     PatFirstnameEdit.Text := PgPatientProcFirstName.AsWideString;
     PatMiddlenameEdit.Text := PgPatientProcMiddleName.AsWideString;
-    PatBirthDateEdit.Date := PgPatientProcBirthdate.AsDateTime;
-    PatCreatedEdit.Date := PgPatientProcCreated.AsDateTime;
+    UpdateDateEdit(PatBirthdateEdit as TNullableDateTimePicker, PgPatientProcBirthdate.AsDateTime);
+    UpdateDateEdit(PatCreatedEdit as TNullableDateTimePicker, PgPatientProcCreated.AsDateTime);
   end else begin
     PatCancelButton.Click;
   end;

@@ -26,5 +26,6 @@ Multiform db-pool-connections Delphi project ( Pg, FireDAC )
 
 ## Changes
 
-1.1 Current release - access db data throw stored procedures. Refactoring.
-1.0 First release with direct access to db data.
+1.11 A little fix calendar updates in operators form. Add commets.
+1.1  Current release - access db data throw stored procedures. Refactoring.
+1.0  First release with direct access to db data.
